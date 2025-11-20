@@ -3,20 +3,26 @@
  */
 class CheckoutPage {
   constructor() {
-    this.url = '/checkout';
+    // Seletores do SauceDemo
+    this.url = '/checkout-step-one.html';
     this.firstNameInput = '#first-name';
     this.lastNameInput = '#last-name';
     this.postalCodeInput = '#postal-code';
     this.continueButton = '#continue';
     this.finishButton = '#finish';
     this.successMessage = '.complete-header';
-    this.errorMessage = '[data-test="error"]';
+    this.successMessageText = '.complete-text';
+    this.errorMessage = '.error-message-container';
+    this.errorMessageText = 'h3[data-test="error"]';
     this.cartItems = '.cart_item';
     this.totalPrice = '.summary_total_label';
   }
 
   visit() {
-    cy.visit(this.url);
+    // Este método não é mais usado diretamente
+    // O fluxo de checkout é iniciado pelos step definitions
+    // que fazem login, adicionam produtos e navegam até o checkout
+    cy.url().should('include', '/checkout-step-one.html');
   }
 
   fillFirstName(firstName) {
@@ -59,15 +65,19 @@ class CheckoutPage {
   }
 
   shouldShowSuccessMessage() {
+    // No SauceDemo, após finalizar checkout, mostra página de sucesso
+    cy.url().should('include', '/checkout-complete.html');
     cy.get(this.successMessage).should('be.visible');
     cy.shouldContainText(this.successMessage, 'Thank you for your order!');
     return this;
   }
 
   shouldShowErrorMessage(message) {
+    // No SauceDemo, mensagem de erro aparece no container
     cy.get(this.errorMessage).should('be.visible');
+    cy.get(this.errorMessageText).should('be.visible');
     if (message) {
-      cy.shouldContainText(this.errorMessage, message);
+      cy.shouldContainText(this.errorMessageText, message);
     }
     return this;
   }

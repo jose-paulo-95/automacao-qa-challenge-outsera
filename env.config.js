@@ -13,8 +13,7 @@ module.exports = {
   API_TIMEOUT: process.env.API_TIMEOUT || 10000,
 
   // Web Application
-  WEB_BASE_URL:
-    process.env.WEB_BASE_URL || "https://the-internet.herokuapp.com",
+  WEB_BASE_URL: process.env.WEB_BASE_URL || "https://www.saucedemo.com",
   WEB_TIMEOUT: process.env.WEB_TIMEOUT || 30000,
 
   // Mobile Configuration

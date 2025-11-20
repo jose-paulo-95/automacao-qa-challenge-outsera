@@ -23,21 +23,25 @@ Feature: Processo de checkout
     And eu preencho o último nome "Doe"
     And eu preencho o código postal "12345"
     And eu clico no botão continuar
-    Then eu devo ver a mensagem de erro
-    And eu devo ver "First Name is required"
+    Then eu devo ver a mensagem de erro do checkout
+    And eu devo ver "Error: First Name is required"
 
   @negative
-  Scenario: Checkout com código postal inválido
+  Scenario: Checkout com segundo nome vazio
+    When eu preencho o primeiro nome "John"
+    And eu preencho o último nome ""
+    And eu preencho o código postal "12345"
+    And eu clico no botão continuar
+    Then eu devo ver a mensagem de erro do checkout
+    And eu devo ver "Error: Last Name is required"
+
+  @negative
+  Scenario: Checkout com postal code vazio
     When eu preencho o primeiro nome "John"
     And eu preencho o último nome "Doe"
-    And eu preencho o código postal "ABC"
+    And eu preencho o código postal ""
     And eu clico no botão continuar
-    Then eu devo ver a mensagem de erro
+    Then eu devo ver a mensagem de erro do checkout
+    And eu devo ver "Error: Postal Code is required"
 
-  @positive
-  Scenario: Validar itens no carrinho antes do checkout
-    Given que tenho itens no carrinho
-    When eu visualizo o carrinho
-    Then eu devo ver os itens no carrinho
-    And eu devo ver o preço total
 

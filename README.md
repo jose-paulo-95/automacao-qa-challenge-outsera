@@ -167,7 +167,7 @@ cp .env.example .env
 4. **Edite o arquivo `.env` com suas configurações:**
 ```env
 API_BASE_URL=https://jsonplaceholder.typicode.com
-WEB_BASE_URL=https://the-internet.herokuapp.com
+WEB_BASE_URL=https://www.saucedemo.com
 MOBILE_PLATFORM=Android
 MOBILE_DEVICE_NAME=emulator-5554
 ```
@@ -398,7 +398,10 @@ act push
 
 ```javascript
 it('Deve retornar lista de usuários com status 200', () => {
-  cy.apiRequest('GET', `${baseUrl}/users`)
+  cy.api({
+    method: 'GET',
+    url: `${baseUrl}/users`,
+  })
     .then((response) => {
       expect(response.status).to.eq(200);
       expect(response.body).to.be.an('array');

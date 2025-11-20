@@ -17,7 +17,12 @@ Cypress.Commands.add('waitForElement', (selector, timeout = 10000) => {
  * @param {string} value - Valor a ser preenchido
  */
 Cypress.Commands.add('fillField', (selector, value) => {
-  cy.get(selector).clear().type(value);
+  cy.get(selector).clear();
+  // Se o valor não for vazio, digita o texto
+  // Se for vazio, apenas limpa o campo (para testar validação de campos obrigatórios)
+  if (value && value.trim() !== '') {
+    cy.get(selector).type(value);
+  }
 });
 
 /**
@@ -44,5 +49,24 @@ Cypress.Commands.add('shouldContainText', (selector, expectedText) => {
  */
 Cypress.Commands.add('uploadFile', (selector, filePath) => {
   cy.get(selector).selectFile(filePath);
+});
+
+/**
+ * Comando para visitar página ignorando erros de rede
+ * @param {string} url - URL para visitar
+ * @param {object} options - Opções adicionais
+ */
+Cypress.Commands.add('visitIgnoringNetworkErrors', (url, options = {}) => {
+  // Interceptar requisições que podem falhar
+  cy.intercept('**/*', { failOnStatusCode: false }).as('networkRequests');
+  
+  // Visitar a página
+  cy.visit(url, {
+    failOnStatusCode: false,
+    ...options
+  });
+  
+  // Aguardar um pouco para garantir que a página carregou
+  cy.wait(1000);
 });
 

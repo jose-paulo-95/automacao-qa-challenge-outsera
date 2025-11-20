@@ -5,19 +5,27 @@ Feature: Navegação na aplicação web
   Para acessar diferentes funcionalidades
 
   @positive
-  Scenario: Navegar para página inicial
+  Scenario: Navegar para página de produtos após login
     Given que estou na página de login
-    When eu clico no link de home
+    When eu preencho o username "standard_user"
+    And eu preencho a senha "secret_sauce"
+    And eu clico no botão de login
     Then eu devo estar na página inicial
 
   @positive
-  Scenario: Navegar para página de login
-    Given que estou na página inicial
-    When eu clico no link de login
-    Then eu devo estar na página de login
+  Scenario: Navegar para o carrinho
+    Given que estou na página de login
+    When eu preencho o username "standard_user"
+    And eu preencho a senha "secret_sauce"
+    And eu clico no botão de login
+    And eu clico no link do carrinho
+    Then eu devo estar na página do carrinho
 
   @positive
-  Scenario: Validar elementos da página inicial
-    Given que estou na página inicial
+  Scenario: Validar elementos da página de produtos
+    Given que estou na página de login
+    When eu preencho o username "standard_user"
+    And eu preencho a senha "secret_sauce"
+    And eu clico no botão de login
     Then eu devo ver os elementos principais da página
 
