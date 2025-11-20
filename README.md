@@ -197,12 +197,43 @@ appium doctor
 
 ### Configuração do Android
 
-1. Configure o Android SDK e adicione ao PATH
-2. Configure um emulador Android ou conecte um dispositivo físico
-3. Verifique se o dispositivo está conectado:
-```bash
-adb devices
-```
+1. **Instalar Android Studio:**
+   - Baixe em: https://developer.android.com/studio
+   - Durante a instalação, certifique-se de instalar:
+     - Android SDK
+     - Android SDK Platform
+     - Android Virtual Device (AVD)
+
+2. **Configurar Variáveis de Ambiente:**
+   - Adicione ao PATH do Windows:
+     - `%LOCALAPPDATA%\Android\Sdk\platform-tools`
+     - `%LOCALAPPDATA%\Android\Sdk\tools`
+     - `%LOCALAPPDATA%\Android\Sdk\emulator`
+   - Crie variável `ANDROID_HOME`:
+     - Valor: `%LOCALAPPDATA%\Android\Sdk`
+
+3. **Criar um Emulador:**
+   - Abra Android Studio → Virtual Device Manager
+   - Clique em "Create Device"
+   - Escolha um dispositivo (ex: Pixel 4)
+   - Escolha uma imagem (ex: Android 11.0 - API 30)
+   - Finalize a criação
+
+4. **Iniciar o Emulador:**
+   ```bash
+   # Listar emuladores
+   emulator -list-avds
+   
+   # Iniciar emulador
+   emulator -avd NomeDoSeuAVD
+   ```
+
+5. **Verificar Conexão:**
+   ```bash
+   adb devices
+   ```
+
+**📖 Guia Completo:** Veja `mobile-tests/SETUP_EMULADOR.md` para instruções detalhadas.
 
 ## 🧪 Executando os Testes
 
@@ -244,19 +275,37 @@ npx cypress run --config-file web-tests/cypress.config.js --spec "web-tests/feat
 
 **⚠️ Nota Importante:** Os testes Mobile não são incluídos no comando `test:all` porque requerem configuração adicional (Appium rodando). Execute-os separadamente.
 
-**Pré-requisito:** Inicie o servidor Appium antes de executar os testes:
-```bash
-appium
-```
+**📖 Guia Completo:** Veja `mobile-tests/COMO_EXECUTAR_TESTES.md` para instruções detalhadas.
 
-**Em outro terminal, execute os testes:**
-```bash
-npm run mobile:test
-```
+**Passos Rápidos:**
+
+1. **Verificar emulador:**
+   ```bash
+   adb devices
+   ```
+
+2. **Se não estiver rodando, iniciar:**
+   ```bash
+   emulator -avd NomeDoSeuAVD
+   ```
+
+3. **Colocar APK na pasta:**
+   - Coloque o arquivo `.apk` em `mobile-tests/apps/app.apk`
+   - Ou atualize `MOBILE_APP_PATH` no `.env`
+
+4. **Iniciar Appium (Terminal 1):**
+   ```bash
+   appium
+   ```
+
+5. **Executar testes (Terminal 2):**
+   ```bash
+   npm run mobile:test
+   ```
 
 **Executar teste específico:**
 ```bash
-npx mocha mobile-tests/tests/login.spec.js --timeout 60000
+npx wdio mobile-tests/appium.conf.js --spec mobile-tests/tests/login.spec.js
 ```
 
 **Para executar todos os testes incluindo Mobile:**

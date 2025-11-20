@@ -1,3 +1,8 @@
-# Esta pasta contém os arquivos APK/IPA para testes mobile
-# Adicione seus arquivos de aplicativo aqui (não versionados)
-
+# Esta pasta deve conter os arquivos .apk (Android) ou .ipa (iOS) dos apps a serem testados
+# 
+# Exemplo:
+# - app.apk (para Android)
+# - app.ipa (para iOS)
+#
+# NOTA: Arquivos .apk e .ipa geralmente são grandes e não devem ser versionados no Git.
+# Configure o .gitignore para ignorar esses arquivos.
