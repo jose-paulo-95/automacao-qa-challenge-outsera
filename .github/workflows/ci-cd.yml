@@ -1,0 +1,188 @@
+name: CI/CD Pipeline - Automação QA
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  api-tests:
+    name: Testes de API (Cypress)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Executar testes de API
+        run: npm run api:test
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
+
+      - name: Upload evidências de vídeo
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-test-videos
+          path: api-tests/videos
+
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-test-screenshots
+          path: api-tests/screenshots
+
+  web-tests:
+    name: Testes Web E2E (Cypress + Cucumber)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Executar testes Web E2E
+        run: npm run web:test
+        env:
+          WEB_BASE_URL: ${{ secrets.WEB_BASE_URL || 'https://the-internet.herokuapp.com' }}
+
+      - name: Upload evidências de vídeo
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-test-videos
+          path: web-tests/videos
+
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-test-screenshots
+          path: web-tests/screenshots
+
+  load-tests:
+    name: Testes de Carga (K6)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Instalar K6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D9B
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Executar testes de carga
+        run: npm run load:test
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
+
+      - name: Upload relatório K6
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: k6-report
+          path: load-tests/reports
+
+  mobile-tests:
+    name: Testes Mobile (Appium)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Instalar Appium
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+          appium driver install xcuitest
+
+      - name: Iniciar Appium Server
+        run: |
+          appium --log appium.log &
+          sleep 10
+
+      - name: Executar testes Mobile
+        run: npm run mobile:test
+        env:
+          MOBILE_PLATFORM: Android
+          MOBILE_DEVICE_NAME: emulator-5554
+
+      - name: Upload relatório Mobile
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: mobile-test-report
+          path: mobile-tests/reports
+
+  generate-report:
+    name: Gerar Relatório Consolidado
+    needs: [api-tests, web-tests, load-tests, mobile-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Baixar artefatos
+        uses: actions/download-artifact@v3
+
+      - name: Gerar relatório consolidado
+        run: |
+          echo "# Relatório de Testes - $(date)" > docs/test-report.md
+          echo "" >> docs/test-report.md
+          echo "## Resumo" >> docs/test-report.md
+          echo "- Testes de API: ${{ job.status }}" >> docs/test-report.md
+          echo "- Testes Web E2E: ${{ job.status }}" >> docs/test-report.md
+          echo "- Testes de Carga: ${{ job.status }}" >> docs/test-report.md
+          echo "- Testes Mobile: ${{ job.status }}" >> docs/test-report.md
+
+      - name: Upload relatório consolidado
+        uses: actions/upload-artifact@v3
+        with:
+          name: consolidated-report
+          path: docs/test-report.md
+

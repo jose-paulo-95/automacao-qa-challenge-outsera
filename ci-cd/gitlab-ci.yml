@@ -1,0 +1,101 @@
+# Pipeline GitLab CI/CD para Automação QA
+# Alternativa ao GitHub Actions
+
+stages:
+  - test
+  - report
+
+variables:
+  NODE_VERSION: "18"
+  API_BASE_URL: "https://jsonplaceholder.typicode.com"
+  WEB_BASE_URL: "https://the-internet.herokuapp.com"
+
+# Cache para node_modules
+cache:
+  paths:
+    - node_modules/
+
+# Testes de API
+api-tests:
+  stage: test
+  image: cypress/browsers:node-18.16.0-chrome-113.0.5672.126-1-ff-113.0-edge-113.0.1774.50-1
+  script:
+    - npm ci
+    - npm run api:test
+  artifacts:
+    when: on_failure
+    paths:
+      - api-tests/videos/
+      - api-tests/screenshots/
+    expire_in: 1 week
+
+# Testes Web E2E
+web-tests:
+  stage: test
+  image: cypress/browsers:node-18.16.0-chrome-113.0.5672.126-1-ff-113.0-edge-113.0.1774.50-1
+  script:
+    - npm ci
+    - npm run web:test
+  artifacts:
+    when: on_failure
+    paths:
+      - web-tests/videos/
+      - web-tests/screenshots/
+    expire_in: 1 week
+
+# Testes de Carga
+load-tests:
+  stage: test
+  image: grafana/k6:latest
+  script:
+    - k6 run load-tests/scripts/load-test.js
+  artifacts:
+    when: always
+    paths:
+      - load-tests/reports/
+    expire_in: 1 week
+
+# Testes Mobile (requer runner com Android SDK)
+mobile-tests:
+  stage: test
+  image: node:18
+  before_script:
+    - apt-get update && apt-get install -y openjdk-11-jdk android-sdk
+    - npm install -g appium
+    - appium driver install uiautomator2
+    - appium --log appium.log &
+    - sleep 10
+  script:
+    - npm ci
+    - npm run mobile:test
+  artifacts:
+    when: always
+    paths:
+      - mobile-tests/reports/
+    expire_in: 1 week
+  only:
+    - schedules
+    - web
+
+# Gerar relatório consolidado
+generate-report:
+  stage: report
+  image: node:18
+  script:
+    - npm ci
+    - |
+      echo "# Relatório de Testes - $(date)" > docs/test-report.md
+      echo "" >> docs/test-report.md
+      echo "## Resumo" >> docs/test-report.md
+      echo "- Testes de API: Concluído" >> docs/test-report.md
+      echo "- Testes Web E2E: Concluído" >> docs/test-report.md
+      echo "- Testes de Carga: Concluído" >> docs/test-report.md
+      echo "- Testes Mobile: Concluído" >> docs/test-report.md
+  artifacts:
+    paths:
+      - docs/test-report.md
+    expire_in: 1 month
+  only:
+    - main
+    - develop
+

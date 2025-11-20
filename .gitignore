@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+*.log
+
+# Reports
+**/reports/
+**/*.html
+**/*.json
+coverage/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Appium
+appium.log
+*.app
+*.apk
+*.ipa
+
+# K6
+k6-results/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
