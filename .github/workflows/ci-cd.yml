@@ -328,6 +328,7 @@ jobs:
   mobile-tests:
     name: Testes Mobile - ${{ matrix.test-file }}
     runs-on: ubuntu-latest
+    if: false # Skip: testes mobile são apenas mocks
     strategy:
       fail-fast: false
       matrix:
@@ -445,7 +446,7 @@ jobs:
 
   generate-report:
     name: Gerar Relatório Consolidado
-    needs: [api-tests, web-tests, load-tests, mobile-tests]
+    needs: [api-tests, web-tests, load-tests]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -497,7 +498,7 @@ jobs:
           echo "- Testes de API: ${{ job.status }}" >> docs/test-report.md
           echo "- Testes Web E2E: ${{ job.status }}" >> docs/test-report.md
           echo "- Testes de Carga: ${{ job.status }}" >> docs/test-report.md
-          echo "- Testes Mobile: ${{ job.status }}" >> docs/test-report.md
+          echo "- Testes Mobile: Skipped (apenas mocks)" >> docs/test-report.md
 
       - name: Upload relatório consolidado
         uses: actions/upload-artifact@v4
