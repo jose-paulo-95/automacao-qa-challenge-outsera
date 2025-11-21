@@ -1,0 +1,7 @@
+{
+  "stepDefinitions": [
+    "web-tests/step_definitions/**/*.{js,mjs,ts,tsx}"
+  ],
+  "nonGlobalStepDefinitions": false
+}
+

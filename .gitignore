@@ -11,8 +11,14 @@ cypress/screenshots/
 # Reports
 **/reports/
 **/*.html
-**/*.json
+# Não ignorar package.json e package-lock.json (são essenciais)
+# Ignorar apenas arquivos de relatório JSON em pastas específicas
+**/reports/**/*.json
+**/coverage/**/*.json
 coverage/
+# Exceções: não ignorar package.json e package-lock.json
+!package.json
+!package-lock.json
 
 # Environment variables
 .env
