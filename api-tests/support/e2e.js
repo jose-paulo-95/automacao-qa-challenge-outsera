@@ -1,13 +1,3 @@
-// ***********************************************************
-// Este arquivo é processado e carregado automaticamente antes
-// dos arquivos de teste. É um ótimo lugar para colocar configurações
-// globais e comportamentos que modificam o Cypress.
-//
-// Você pode ler mais aqui:
-// https://on.cypress.io/configuration
-// ***********************************************************
-
-// Importar plugin cypress-plugin-api
 import 'cypress-plugin-api';
 
 // Importar comandos customizados

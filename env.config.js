@@ -1,11 +1,3 @@
-/**
- * Arquivo de configuração de ambiente
- * Copie este arquivo para .env e ajuste conforme necessário
- *
- * IMPORTANTE: O arquivo .env não é versionado por segurança
- * Use este arquivo como referência
- */
-
 module.exports = {
   // API Configuration
   API_BASE_URL:

@@ -78,13 +78,3 @@ Cypress.Commands.add("validateJsonSchema", (obj, schema) => {
 
   validateField(dataToValidate, schema);
 });
-
-/**
- * Comando para validar status code
- * @param {number} statusCode - Status code esperado
- */
-Cypress.Commands.add("shouldHaveStatus", (statusCode) => {
-  cy.then((response) => {
-    expect(response.status).to.eq(statusCode);
-  });
-});
