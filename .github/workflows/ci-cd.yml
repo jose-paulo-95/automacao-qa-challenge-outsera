@@ -368,23 +368,43 @@ jobs:
           npm install -g appium
 
           echo "🔍 Verificando drivers instalados..."
-          INSTALLED_DRIVERS=$(appium driver list --installed 2>/dev/null || echo "")
-          echo "$INSTALLED_DRIVERS"
+          appium driver list --installed || echo "Nenhum driver listado ainda"
 
-          echo "📱 Instalando/Atualizando drivers..."
-          # Instalar ou atualizar uiautomator2 (necessário para Android)
-          if echo "$INSTALLED_DRIVERS" | grep -q "uiautomator2"; then
-            echo "✅ uiautomator2 já instalado, atualizando..."
-            appium driver update uiautomator2 2>/dev/null || appium driver install uiautomator2 || echo "⚠️ Falha ao atualizar uiautomator2, mas pode estar OK"
+          echo "📱 Configurando drivers..."
+          # Configurar uiautomator2 (necessário para Android)
+          # Estratégia: tentar atualizar, se falhar tentar instalar, se ambos falharem verificar se já está instalado
+          echo "📥 Configurando uiautomator2..."
+          UPDATE_OUTPUT=$(appium driver update uiautomator2 2>&1) || true
+          if echo "$UPDATE_OUTPUT" | grep -q "already installed\|already up to date\|up to date"; then
+            echo "✅ uiautomator2 já está instalado e atualizado"
+          elif echo "$UPDATE_OUTPUT" | grep -q "successfully updated\|updated successfully"; then
+            echo "✅ uiautomator2 atualizado com sucesso"
           else
-            echo "📥 Instalando uiautomator2..."
-            appium driver install uiautomator2
+            # Tentar instalar
+            INSTALL_OUTPUT=$(appium driver install uiautomator2 2>&1) || true
+            if echo "$INSTALL_OUTPUT" | grep -q "already installed"; then
+              echo "✅ uiautomator2 já está instalado"
+            elif echo "$INSTALL_OUTPUT" | grep -q "successfully installed\|installed successfully"; then
+              echo "✅ uiautomator2 instalado com sucesso"
+            else
+              # Verificar se realmente está instalado
+              if appium driver list --installed 2>/dev/null | grep -q "uiautomator2"; then
+                echo "✅ uiautomator2 já está instalado (verificado via list)"
+              else
+                echo "❌ Falha ao instalar uiautomator2"
+                echo "Update output: $UPDATE_OUTPUT"
+                echo "Install output: $INSTALL_OUTPUT"
+                exit 1
+              fi
+            fi
           fi
 
           # xcuitest é apenas para iOS, não necessário em Linux/Android
-          # Mas tentamos instalar se não der erro
+          # Tentar instalar, mas não falhar se não conseguir
           echo "📥 Tentando instalar xcuitest (opcional para iOS)..."
-          appium driver install xcuitest 2>/dev/null || echo "⚠️ xcuitest não instalado (normal em ambiente Linux/Android)"
+          appium driver update xcuitest 2>/dev/null || \
+          appium driver install xcuitest 2>/dev/null || \
+          echo "⚠️ xcuitest não instalado (normal em ambiente Linux/Android)"
 
           echo "✅ Verificação final dos drivers:"
           appium driver list --installed || echo "Nenhum driver listado"
