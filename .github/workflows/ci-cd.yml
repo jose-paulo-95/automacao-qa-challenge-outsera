@@ -19,6 +19,11 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
       - name: Instalar dependências
         run: |
           if [ -f package-lock.json ]; then
@@ -27,10 +32,33 @@ jobs:
             npm install
           fi
 
+      - name: Verificar estrutura do projeto
+        run: |
+          echo "📁 Estrutura do projeto:"
+          ls -la api-tests/ || echo "⚠️ Pasta api-tests não encontrada"
+          echo ""
+          echo "📦 Dependências instaladas:"
+          npm list cypress || echo "⚠️ Cypress não encontrado"
+
+      - name: Verificar instalação do Cypress
+        run: |
+          npx cypress verify || echo "⚠️ Cypress verification failed, continuing..."
+          npx cypress version || echo "⚠️ Cypress version check failed"
+
       - name: Executar testes de API
-        run: npm run api:test
+        run: |
+          set -e
+          echo "🚀 Iniciando testes de API..."
+          npm run api:test || {
+            echo "❌ Testes falharam com código de saída: $?"
+            echo "📋 Verificando logs..."
+            ls -la api-tests/videos/ 2>/dev/null || echo "Nenhum vídeo gerado"
+            ls -la api-tests/screenshots/ 2>/dev/null || echo "Nenhum screenshot gerado"
+            exit 1
+          }
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
+          DEBUG: cypress:*
 
       - name: Upload evidências de vídeo
         if: failure()
@@ -58,6 +86,11 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
       - name: Instalar dependências
         run: |
           if [ -f package-lock.json ]; then
@@ -66,10 +99,33 @@ jobs:
             npm install
           fi
 
+      - name: Verificar estrutura do projeto
+        run: |
+          echo "📁 Estrutura do projeto:"
+          ls -la web-tests/ || echo "⚠️ Pasta web-tests não encontrada"
+          echo ""
+          echo "📦 Dependências instaladas:"
+          npm list cypress @badeball/cypress-cucumber-preprocessor || echo "⚠️ Dependências não encontradas"
+
+      - name: Verificar instalação do Cypress
+        run: |
+          npx cypress verify || echo "⚠️ Cypress verification failed, continuing..."
+          npx cypress version || echo "⚠️ Cypress version check failed"
+
       - name: Executar testes Web E2E
-        run: npm run web:test
+        run: |
+          set -e
+          echo "🚀 Iniciando testes Web E2E..."
+          npm run web:test || {
+            echo "❌ Testes falharam com código de saída: $?"
+            echo "📋 Verificando logs..."
+            ls -la web-tests/videos/ 2>/dev/null || echo "Nenhum vídeo gerado"
+            ls -la web-tests/screenshots/ 2>/dev/null || echo "Nenhum screenshot gerado"
+            exit 1
+          }
         env:
-          WEB_BASE_URL: ${{ secrets.WEB_BASE_URL || 'https://the-internet.herokuapp.com' }}
+          WEB_BASE_URL: ${{ secrets.WEB_BASE_URL || 'https://www.saucedemo.com' }}
+          DEBUG: cypress:*
 
       - name: Upload evidências de vídeo
         if: failure()
