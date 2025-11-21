@@ -2,9 +2,9 @@ name: CI/CD Pipeline - Automação QA
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   api-tests:
@@ -17,8 +17,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Instalar dependências
         run: npm ci
@@ -30,14 +30,14 @@ jobs:
 
       - name: Upload evidências de vídeo
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: api-test-videos
           path: api-tests/videos
 
       - name: Upload screenshots
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: api-test-screenshots
           path: api-tests/screenshots
@@ -52,8 +52,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Instalar dependências
         run: npm ci
@@ -65,14 +65,14 @@ jobs:
 
       - name: Upload evidências de vídeo
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: web-test-videos
           path: web-tests/videos
 
       - name: Upload screenshots
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: web-test-screenshots
           path: web-tests/screenshots
@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload relatório K6
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k6-report
           path: load-tests/reports
@@ -114,8 +114,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Instalar dependências
         run: npm ci
@@ -123,8 +123,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '11'
+          distribution: "temurin"
+          java-version: "11"
 
       - name: Instalar Appium
         run: |
@@ -145,7 +145,7 @@ jobs:
 
       - name: Upload relatório Mobile
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mobile-test-report
           path: mobile-tests/reports
@@ -162,13 +162,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Instalar dependências
         run: npm ci
 
       - name: Baixar artefatos
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Gerar relatório consolidado
         run: |
@@ -181,8 +181,7 @@ jobs:
           echo "- Testes Mobile: ${{ job.status }}" >> docs/test-report.md
 
       - name: Upload relatório consolidado
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: consolidated-report
           path: docs/test-report.md
-
