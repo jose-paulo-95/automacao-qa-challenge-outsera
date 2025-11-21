@@ -18,10 +18,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18"
-          cache: "npm"
 
       - name: Instalar dependências
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Executar testes de API
         run: npm run api:test
@@ -53,10 +57,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18"
-          cache: "npm"
 
       - name: Instalar dependências
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Executar testes Web E2E
         run: npm run web:test
@@ -83,6 +91,19 @@ jobs:
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Instalar dependências
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Instalar K6
         run: |
@@ -115,10 +136,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18"
-          cache: "npm"
 
       - name: Instalar dependências
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Setup Java
         uses: actions/setup-java@v3
@@ -165,7 +190,12 @@ jobs:
           node-version: "18"
 
       - name: Instalar dependências
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Baixar artefatos
         uses: actions/download-artifact@v4
