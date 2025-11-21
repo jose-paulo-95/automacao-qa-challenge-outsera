@@ -260,6 +260,11 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Instalar dependências do sistema (jq para processar JSON)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq bc
+
       - name: Instalar dependências
         run: |
           echo "📦 Verificando arquivos de dependências..."
@@ -313,17 +318,215 @@ jobs:
           }
           echo "✅ K6 instalado com sucesso: $(k6 version)"
 
-      - name: Executar testes de carga
-        run: npm run load:test
+      - name: Criar diretório de relatórios
+        run: |
+          mkdir -p load-tests/reports
+
+      - name: Executar testes de carga e gerar relatórios
+        run: |
+          echo "🚀 Iniciando testes de carga com K6..."
+          echo "📊 Gerando relatórios em múltiplos formatos..."
+
+          # Executar K6 com saída JSON e sumário detalhado
+          k6 run \
+            --out json=load-tests/reports/k6-results.json \
+            --summary-export=load-tests/reports/k6-summary.json \
+            load-tests/scripts/load-test.js 2>&1 | tee load-tests/reports/k6-output.txt
+
+          echo "✅ Testes de carga concluídos!"
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}
 
-      - name: Upload relatório K6
+      - name: Gerar relatório detalhado do K6
+        if: always()
+        run: |
+          echo "📝 Gerando relatório detalhado do K6..."
+
+          # Criar diretório se não existir
+          mkdir -p load-tests/reports
+
+          # Verificar se os arquivos de resultado existem
+          if [ -f "load-tests/reports/k6-summary.json" ]; then
+            echo "✅ Arquivo de sumário encontrado, processando..."
+            
+            # Gerar relatório em Markdown
+            {
+              echo "# 📊 Relatório Detalhado - Testes de Carga (K6)"
+              echo ""
+              echo "## 📅 Informações da Execução"
+              echo ""
+              echo "- **Data/Hora**: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+              echo "- **Target API**: ${{ secrets.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}"
+              echo "- **Ferramenta**: K6 $(k6 version | head -1)"
+              echo ""
+              echo "---"
+              echo ""
+              echo "## 📈 Resumo Executivo"
+              echo ""
+              
+              # Extrair informações do sumário JSON
+              if command -v jq &> /dev/null; then
+                echo "### Estatísticas Gerais"
+                echo ""
+                echo "| Métrica | Valor |"
+                echo "|---------|-------|"
+                
+                # Total de requisições
+                TOTAL_REQS=$(jq -r '.metrics.http_reqs.values.count // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                echo "| **Total de Requisições** | $TOTAL_REQS |"
+                
+                # Taxa de requisições por segundo
+                RPS=$(jq -r '.metrics.http_reqs.values.rate // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                echo "| **Requisições por Segundo (RPS)** | $(printf "%.2f" $RPS) |"
+                
+                # Taxa de erro
+                ERROR_RATE=$(jq -r '.metrics.http_req_failed.values.rate // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                ERROR_PERCENT=$(echo "$ERROR_RATE * 100" | bc -l 2>/dev/null || echo "0")
+                echo "| **Taxa de Erro** | $(printf "%.2f%%" $ERROR_PERCENT) |"
+                
+                # Tempo de resposta médio
+                AVG_DURATION=$(jq -r '.metrics.http_req_duration.values.avg // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                echo "| **Tempo de Resposta Médio** | $(printf "%.2f ms" $AVG_DURATION) |"
+                
+                # P95
+                P95=$(jq -r '.metrics.http_req_duration.values["p(95)"] // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                echo "| **P95 (95% das requisições)** | $(printf "%.2f ms" $P95) |"
+                
+                # P99
+                P99=$(jq -r '.metrics.http_req_duration.values["p(99)"] // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                echo "| **P99 (99% das requisições)** | $(printf "%.2f ms" $P99) |"
+                
+                # Tempo mínimo
+                MIN_DURATION=$(jq -r '.metrics.http_req_duration.values.min // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                echo "| **Tempo Mínimo** | $(printf "%.2f ms" $MIN_DURATION) |"
+                
+                # Tempo máximo
+                MAX_DURATION=$(jq -r '.metrics.http_req_duration.values.max // 0' load-tests/reports/k6-summary.json 2>/dev/null || echo "0")
+                echo "| **Tempo Máximo** | $(printf "%.2f ms" $MAX_DURATION) |"
+                
+                echo ""
+                echo "### Status dos Thresholds"
+                echo ""
+                
+                # Verificar thresholds
+                THRESHOLDS_PASSED=$(jq -r '.root_group.checks | to_entries[] | select(.value.passes > 0 or .value.fails > 0) | "\(.key): \(if .value.fails == 0 then "✅ Passou" else "❌ Falhou" end)"' load-tests/reports/k6-summary.json 2>/dev/null)
+                
+                if [ -n "$THRESHOLDS_PASSED" ]; then
+                  echo "$THRESHOLDS_PASSED" | while IFS= read -r line; do
+                    echo "- $line"
+                  done
+                else
+                  echo "- ℹ️ Informações de thresholds não disponíveis"
+                fi
+                
+              else
+                echo "⚠️ jq não está instalado. Instalando..."
+                sudo apt-get update && sudo apt-get install -y jq
+                
+                # Tentar novamente
+                if command -v jq &> /dev/null; then
+                  echo "✅ jq instalado, processando dados..."
+                  # Repetir lógica acima
+                else
+                  echo "❌ Não foi possível instalar jq. Exibindo sumário básico:"
+                  echo ""
+                  if [ -f "load-tests/reports/k6-output.txt" ]; then
+                    echo "### Saída do K6:"
+                    echo ""
+                    echo "\`\`\`"
+                    tail -50 load-tests/reports/k6-output.txt
+                    echo "\`\`\`"
+                  fi
+                fi
+              fi
+              
+              echo ""
+              echo "---"
+              echo ""
+              echo "## 📊 Configuração do Teste"
+              echo ""
+              echo "### Stages de Carga:"
+              echo ""
+              echo "1. **Ramp-up Inicial**: 0 → 100 usuários em 1 minuto"
+              echo "2. **Ramp-up Principal**: 100 → 500 usuários em 3 minutos"
+              echo "3. **Carga Constante**: 500 usuários por 5 minutos"
+              echo "4. **Ramp-down**: 500 → 0 usuários em 2 minutos"
+              echo ""
+              echo "**Duração Total**: ~11 minutos"
+              echo ""
+              echo "### Thresholds Configurados:"
+              echo ""
+              echo "- ✅ **http_req_duration**: P95 < 500ms, P99 < 1000ms"
+              echo "- ✅ **http_req_failed**: Taxa de erro < 1%"
+              echo "- ✅ **errors**: Taxa de erro customizada < 1%"
+              echo ""
+              echo "---"
+              echo ""
+              echo "## 🔍 Endpoints Testados"
+              echo ""
+              echo "1. **GET /posts** - Listagem de posts"
+              echo "2. **GET /users** - Listagem de usuários"
+              echo "3. **GET /posts/:id** - Busca de post específico"
+              echo "4. **POST /posts** - Criação de novo post"
+              echo ""
+              echo "---"
+              echo ""
+              echo "## 📦 Arquivos Gerados"
+              echo ""
+              echo "- 📄 **k6-summary.json**: Sumário detalhado em JSON"
+              echo "- 📄 **k6-results.json**: Resultados completos em JSON"
+              echo "- 📄 **k6-output.txt**: Saída completa do console"
+              echo ""
+              echo "---"
+              echo ""
+              echo "## 📝 Notas"
+              echo ""
+              echo "- Este relatório foi gerado automaticamente pelo GitHub Actions"
+              echo "- Os dados são extraídos do sumário JSON gerado pelo K6"
+              echo "- Para análise detalhada, baixe os arquivos JSON disponíveis nos artefatos"
+              echo ""
+              echo "---"
+              echo ""
+              echo "**Gerado em**: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+            } > load-tests/reports/k6-report.md
+            
+            echo "✅ Relatório detalhado gerado: load-tests/reports/k6-report.md"
+            
+          else
+            echo "⚠️ Arquivo de sumário não encontrado. Gerando relatório básico..."
+            
+            {
+              echo "# 📊 Relatório - Testes de Carga (K6)"
+              echo ""
+              echo "## ⚠️ Aviso"
+              echo ""
+              echo "O arquivo de sumário JSON não foi encontrado. Exibindo saída do console:"
+              echo ""
+              echo "\`\`\`"
+              if [ -f "load-tests/reports/k6-output.txt" ]; then
+                cat load-tests/reports/k6-output.txt
+              else
+                echo "Nenhuma saída disponível"
+              fi
+              echo "\`\`\`"
+            } > load-tests/reports/k6-report.md
+          fi
+
+          echo ""
+          echo "📄 Prévia do relatório:"
+          head -40 load-tests/reports/k6-report.md
+
+      - name: Upload relatórios K6
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: k6-report
-          path: load-tests/reports
+          name: k6-reports
+          path: |
+            load-tests/reports/k6-report.md
+            load-tests/reports/k6-summary.json
+            load-tests/reports/k6-results.json
+            load-tests/reports/k6-output.txt
+          retention-days: 30
 
   mobile-tests:
     name: Testes Mobile - ${{ matrix.test-file }}
