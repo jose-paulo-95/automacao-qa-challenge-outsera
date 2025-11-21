@@ -8,11 +8,17 @@ on:
 
 jobs:
   api-tests:
-    name: Testes de API (Cypress)
+    name: Testes de API - ${{ matrix.test-file }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test-file: [users, posts]
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -80,8 +86,8 @@ jobs:
       - name: Executar testes de API
         run: |
           set -e
-          echo "🚀 Iniciando testes de API..."
-          npm run api:test || {
+          echo "🚀 Iniciando testes de API - ${{ matrix.test-file }}..."
+          npx cypress run --config-file api-tests/cypress.config.js --spec "api-tests/tests/${{ matrix.test-file }}.spec.js" || {
             echo "❌ Testes falharam com código de saída: $?"
             echo "📋 Verificando logs..."
             ls -la api-tests/videos/ 2>/dev/null || echo "Nenhum vídeo gerado"
@@ -96,19 +102,23 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: api-test-videos
+          name: api-test-videos-${{ matrix.test-file }}
           path: api-tests/videos
 
       - name: Upload screenshots
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: api-test-screenshots
+          name: api-test-screenshots-${{ matrix.test-file }}
           path: api-tests/screenshots
 
   web-tests:
-    name: Testes Web E2E (Cypress + Cucumber)
+    name: Testes Web E2E - ${{ matrix.feature }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [login, navigation, checkout]
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
@@ -197,8 +207,8 @@ jobs:
       - name: Executar testes Web E2E
         run: |
           set -e
-          echo "🚀 Iniciando testes Web E2E..."
-          npm run web:test || {
+          echo "🚀 Iniciando testes Web E2E - ${{ matrix.feature }}..."
+          npx cypress run --config-file web-tests/cypress.config.js --spec "web-tests/features/${{ matrix.feature }}.feature" || {
             echo "❌ Testes falharam com código de saída: $?"
             echo "📋 Verificando logs..."
             ls -la web-tests/videos/ 2>/dev/null || echo "Nenhum vídeo gerado"
@@ -213,14 +223,14 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: web-test-videos
+          name: web-test-videos-${{ matrix.feature }}
           path: web-tests/videos
 
       - name: Upload screenshots
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: web-test-screenshots
+          name: web-test-screenshots-${{ matrix.feature }}
           path: web-tests/screenshots
 
   load-tests:
@@ -316,8 +326,12 @@ jobs:
           path: load-tests/reports
 
   mobile-tests:
-    name: Testes Mobile (Appium)
+    name: Testes Mobile - ${{ matrix.test-file }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test-file: [login, navigation, form]
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
@@ -415,7 +429,9 @@ jobs:
           sleep 10
 
       - name: Executar testes Mobile
-        run: npm run mobile:test
+        run: |
+          echo "🚀 Iniciando testes Mobile - ${{ matrix.test-file }}..."
+          npx wdio mobile-tests/appium.conf.js --spec "mobile-tests/tests/${{ matrix.test-file }}.spec.js"
         env:
           MOBILE_PLATFORM: Android
           MOBILE_DEVICE_NAME: emulator-5554
@@ -424,7 +440,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-test-report
+          name: mobile-test-report-${{ matrix.test-file }}
           path: mobile-tests/reports
 
   generate-report:
