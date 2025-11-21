@@ -266,36 +266,37 @@ jobs:
 
       - name: Instalar K6
         run: |
-          echo "📦 Instalando K6..."
-          # Método alternativo: usar servidor de chaves HTTPS ou instalação direta
-          # Tentar método com keyserver HTTPS primeiro
-          if sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver https://keyserver.ubuntu.com --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D9B 2>/dev/null; then
-            echo "✅ Chave GPG importada com sucesso"
-            echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-            sudo apt-get update
-            sudo apt-get install -y k6
-          else
-            echo "⚠️ Método GPG falhou, tentando instalação direta..."
-            # Método alternativo: instalação direta via script
-            sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D9B || \
-            sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver keyserver.ubuntu.com --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D9B || \
-            echo "⚠️ Importação de chave falhou, continuando sem verificação..."
-            
-            echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-            sudo apt-get update
-            sudo apt-get install -y k6 || {
-              echo "⚠️ Instalação via apt falhou, tentando método direto..."
-              # Instalação direta do binário
-              K6_VERSION=$(curl -s https://api.github.com/repos/grafana/k6/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-              wget -q https://github.com/grafana/k6/releases/download/${K6_VERSION}/k6-${K6_VERSION}-linux-amd64.tar.gz
-              tar -xzf k6-${K6_VERSION}-linux-amd64.tar.gz
-              sudo mv k6-${K6_VERSION}-linux-amd64/k6 /usr/local/bin/k6
-              sudo chmod +x /usr/local/bin/k6
-              rm -rf k6-${K6_VERSION}-linux-amd64*
-            }
+          echo "📦 Instalando K6 via método direto (mais confiável)..."
+
+          # Instalar dependências necessárias
+          sudo apt-get update
+          sudo apt-get install -y curl tar gzip
+
+          # Obter a versão mais recente do K6
+          echo "🔍 Obtendo versão mais recente do K6..."
+          K6_VERSION=$(curl -s https://api.github.com/repos/grafana/k6/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | sed 's/v//')
+
+          if [ -z "$K6_VERSION" ]; then
+            echo "⚠️ Não foi possível obter a versão, usando versão fixa..."
+            K6_VERSION="0.50.0"
           fi
 
+          echo "📥 Baixando K6 versão ${K6_VERSION}..."
+          cd /tmp
+          wget -q https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-amd64.tar.gz -O k6.tar.gz
+
+          echo "📦 Extraindo K6..."
+          tar -xzf k6.tar.gz
+
+          echo "📁 Movendo binário para /usr/local/bin..."
+          sudo mv k6-v${K6_VERSION}-linux-amd64/k6 /usr/local/bin/k6
+          sudo chmod +x /usr/local/bin/k6
+
+          echo "🧹 Limpando arquivos temporários..."
+          rm -rf k6-v${K6_VERSION}-linux-amd64* k6.tar.gz
+
           # Verificar instalação
+          echo "✅ Verificando instalação..."
           k6 version || {
             echo "❌ K6 não foi instalado corretamente"
             exit 1
