@@ -1,6 +1,5 @@
 # 🚀 Projeto de Automação QA - Challenge
 
-Projeto completo de automação de testes QA seguindo as melhores práticas do mercado, utilizando Cypress, K6, Appium e CI/CD.
 
 ## 📋 Índice
 
@@ -18,15 +17,14 @@ Projeto completo de automação de testes QA seguindo as melhores práticas do m
 
 ## 🎯 Sobre o Projeto
 
-Este projeto foi desenvolvido como um desafio técnico completo de automação de testes QA, demonstrando expertise em:
+Este projeto foi desenvolvido como um desafio técnico:
 
 - ✅ Testes de API com Cypress
 - ✅ Testes E2E Web com Cypress + Cucumber (BDD)
 - ✅ Testes Mobile com Appium
 - ✅ Testes de Carga com K6
 - ✅ Integração CI/CD com GitHub Actions
-- ✅ Page Object Pattern
-- ✅ Clean Code e boas práticas
+
 
 ## 📁 Estrutura do Projeto
 
@@ -397,12 +395,3 @@ Para testar o pipeline localmente, você pode usar [act](https://github.com/nekt
 ```bash
 act push
 ```
-
-## 🤝 Contribuindo
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
