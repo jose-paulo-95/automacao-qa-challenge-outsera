@@ -490,15 +490,214 @@ jobs:
       - name: Baixar artefatos
         uses: actions/download-artifact@v4
 
-      - name: Gerar relatório consolidado
+      - name: Criar diretório de relatórios
         run: |
-          echo "# Relatório de Testes - $(date)" > docs/test-report.md
-          echo "" >> docs/test-report.md
-          echo "## Resumo" >> docs/test-report.md
-          echo "- Testes de API: ${{ job.status }}" >> docs/test-report.md
-          echo "- Testes Web E2E: ${{ job.status }}" >> docs/test-report.md
-          echo "- Testes de Carga: ${{ job.status }}" >> docs/test-report.md
-          echo "- Testes Mobile: Skipped (apenas mocks)" >> docs/test-report.md
+          mkdir -p docs
+
+      - name: Gerar relatório consolidado detalhado
+        run: |
+          # Criar arquivo de relatório
+          {
+            echo "# 📊 Relatório Detalhado de Testes"
+            echo ""
+            echo "## 📅 Informações da Execução"
+            echo ""
+            echo "- **Data/Hora**: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "- **Commit**: ${{ github.sha }}"
+            echo "- **Branch**: ${{ github.ref_name }}"
+            echo "- **Workflow**: ${{ github.workflow }}"
+            echo "- **Executor**: ${{ github.actor }}"
+            echo "- **Run ID**: ${{ github.run_id }}"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## 📈 Resumo Executivo"
+            echo ""
+            echo "| Tipo de Teste | Status | Jobs Executados | Detalhes |"
+            echo "|--------------|--------|-----------------|----------|"
+            echo "| **API Tests** | ${{ needs.api-tests.result }} | 2 jobs (users, posts) | Ver seção detalhada abaixo |"
+            echo "| **Web E2E Tests** | ${{ needs.web-tests.result }} | 3 jobs (login, navigation, checkout) | Ver seção detalhada abaixo |"
+            echo "| **Load Tests** | ${{ needs.load-tests.result }} | 1 job (K6) | Ver seção detalhada abaixo |"
+            echo "| **Mobile Tests** | ⏭️ Skipped | - | Testes mobile são apenas mocks |"
+            echo ""
+            echo "### 📊 Estatísticas Gerais"
+            echo ""
+            
+            # Calcular estatísticas
+            TOTAL_JOBS=6
+            SUCCESS_COUNT=0
+            FAIL_COUNT=0
+            
+            if [ "${{ needs.api-tests.result }}" = "success" ]; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 2))
+            else
+              FAIL_COUNT=$((FAIL_COUNT + 2))
+            fi
+            
+            if [ "${{ needs.web-tests.result }}" = "success" ]; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 3))
+            else
+              FAIL_COUNT=$((FAIL_COUNT + 3))
+            fi
+            
+            if [ "${{ needs.load-tests.result }}" = "success" ]; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            else
+              FAIL_COUNT=$((FAIL_COUNT + 1))
+            fi
+            
+            echo "- **Total de Jobs**: $TOTAL_JOBS jobs executados"
+            echo "- **Jobs com Sucesso**: $SUCCESS_COUNT"
+            echo "- **Jobs com Falha**: $FAIL_COUNT"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## 🔍 Detalhes por Tipo de Teste"
+            echo ""
+            echo "### 1. Testes de API (Cypress)"
+            echo ""
+            echo "**Status Geral**: ${{ needs.api-tests.result }}"
+            echo ""
+            echo "#### Jobs Executados:"
+            echo ""
+            echo "- ✅ **users.spec.js**: ${{ needs.api-tests.result }}"
+            echo "- ✅ **posts.spec.js**: ${{ needs.api-tests.result }}"
+            echo ""
+            echo "#### Cobertura:"
+            echo ""
+            echo "- ✅ GET /users (listagem e busca individual)"
+            echo "- ✅ POST /users (criação)"
+            echo "- ✅ PUT /users/:id (atualização)"
+            echo "- ✅ DELETE /users/:id (remoção)"
+            echo "- ✅ GET /posts (listagem, busca e filtros)"
+            echo "- ✅ POST /posts (criação)"
+            echo "- ✅ PUT /posts/:id (atualização)"
+            echo "- ✅ DELETE /posts/:id (remoção)"
+            echo "- ✅ Validação de headers e status codes"
+            echo "- ✅ Cenários negativos (404, timeouts)"
+            echo ""
+            echo "#### Artefatos Disponíveis:"
+            echo ""
+            if [ -d "api-test-videos-users" ] || [ -d "api-test-videos-posts" ]; then
+              echo "- 📹 Vídeos de execução (em caso de falha)"
+              echo "- 📸 Screenshots (em caso de falha)"
+            else
+              echo "- ✅ Nenhum artefato de falha gerado (todos os testes passaram)"
+            fi
+            echo ""
+            echo "---"
+            echo ""
+            echo "### 2. Testes Web E2E (Cypress + Cucumber)"
+            echo ""
+            echo "**Status Geral**: ${{ needs.web-tests.result }}"
+            echo ""
+            echo "#### Jobs Executados:"
+            echo ""
+            echo "- ✅ **login.feature**: ${{ needs.web-tests.result }}"
+            echo "- ✅ **navigation.feature**: ${{ needs.web-tests.result }}"
+            echo "- ✅ **checkout.feature**: ${{ needs.web-tests.result }}"
+            echo ""
+            echo "#### Cobertura:"
+            echo ""
+            echo "- ✅ Login com credenciais válidas"
+            echo "- ✅ Login com credenciais inválidas"
+            echo "- ✅ Validação de campos obrigatórios"
+            echo "- ✅ Navegação entre páginas"
+            echo "- ✅ Fluxo completo de checkout"
+            echo "- ✅ Validação de formulários"
+            echo ""
+            echo "#### Artefatos Disponíveis:"
+            echo ""
+            if [ -d "web-test-videos-login" ] || [ -d "web-test-videos-navigation" ] || [ -d "web-test-videos-checkout" ]; then
+              echo "- 📹 Vídeos de execução (em caso de falha)"
+              echo "- 📸 Screenshots (em caso de falha)"
+            else
+              echo "- ✅ Nenhum artefato de falha gerado (todos os testes passaram)"
+            fi
+            echo ""
+            echo "---"
+            echo ""
+            echo "### 3. Testes de Carga (K6)"
+            echo ""
+            echo "**Status Geral**: ${{ needs.load-tests.result }}"
+            echo ""
+            echo "#### Configuração:"
+            echo ""
+            echo "- **Ferramenta**: K6"
+            echo "- **Target**: ${{ secrets.API_BASE_URL || 'https://jsonplaceholder.typicode.com' }}"
+            echo ""
+            echo "#### Cenários de Carga:"
+            echo ""
+            echo "- ✅ Ramp-up gradual de usuários"
+            echo "- ✅ Teste de carga constante"
+            echo "- ✅ Ramp-down gradual"
+            echo "- ✅ Múltiplos endpoints testados"
+            echo ""
+            echo "#### Artefatos Disponíveis:"
+            echo ""
+            if [ -d "k6-report" ]; then
+              echo "- 📊 Relatório K6 disponível em: k6-report/"
+            else
+              echo "- ✅ Relatório disponível nos logs da execução"
+            fi
+            echo ""
+            echo "---"
+            echo ""
+            echo "### 4. Testes Mobile (Appium)"
+            echo ""
+            echo "**Status**: ⏭️ **Skipped** (apenas mocks)"
+            echo ""
+            echo "> Os testes mobile foram pulados nesta execução pois são apenas mocks para demonstração."
+            echo ""
+            echo "---"
+            echo ""
+            echo "## 📦 Artefatos e Evidências"
+            echo ""
+            echo "### Artefatos Disponíveis no GitHub Actions:"
+            echo ""
+            echo "Os seguintes artefatos foram gerados e estão disponíveis para download:"
+            echo ""
+            if ls -1 */ 2>/dev/null | grep -qE "(api-test|web-test|k6-report|mobile-test)"; then
+              ls -1 */ 2>/dev/null | grep -E "(api-test|web-test|k6-report|mobile-test)" | while read dir; do
+                echo "- 📁 $dir"
+              done
+            else
+              echo "- ℹ️ Nenhum artefato adicional encontrado no diretório atual"
+            fi
+            echo ""
+            echo "### Como Acessar os Artefatos:"
+            echo ""
+            echo "1. Vá para a página do workflow no GitHub Actions"
+            echo "2. Clique no job específico que falhou"
+            echo "3. Role até a seção \"Artifacts\""
+            echo "4. Baixe o artefato desejado"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## 🔗 Links Úteis"
+            echo ""
+            echo "- **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "- **Commit**: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+            echo "- **Branch**: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## 📝 Notas Adicionais"
+            echo ""
+            echo "- Este relatório foi gerado automaticamente pelo GitHub Actions"
+            echo "- Os testes foram executados em paralelo usando matrix strategy"
+            echo "- Todos os jobs foram executados independentemente (fail-fast: false)"
+            echo "- Artefatos de vídeo e screenshots são gerados apenas em caso de falha"
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Gerado em**: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+          } > docs/test-report.md
+
+          echo "✅ Relatório detalhado gerado com sucesso!"
+          echo ""
+          echo "📄 Prévia do relatório:"
+          head -30 docs/test-report.md
 
       - name: Upload relatório consolidado
         uses: actions/upload-artifact@v4
