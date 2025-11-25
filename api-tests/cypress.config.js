@@ -4,7 +4,7 @@ require("dotenv").config();
 module.exports = defineConfig({
   e2e: {
     baseUrl: process.env.API_BASE_URL || "https://jsonplaceholder.typicode.com",
-    specPattern: "api-tests/tests/**/*.spec.js",
+    specPattern: "api-tests/tests/**/*.api.spec.js",
     supportFile: "api-tests/support/e2e.js",
     fixturesFolder: "api-tests/fixtures",
     videosFolder: "api-tests/videos",

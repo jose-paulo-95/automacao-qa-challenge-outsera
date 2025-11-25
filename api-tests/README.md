@@ -16,7 +16,7 @@ npm run api:open
 
 ```
 api-tests/
-├── tests/           # Testes de API (users.spec.js, posts.spec.js)
+├── tests/           # Testes de API (users.api.spec.js, posts.api.spec.js)
 ├── fixtures/        # Dados de teste (users.json, posts.json)
 ├── support/         # Comandos customizados e configurações
 └── cypress.config.js
