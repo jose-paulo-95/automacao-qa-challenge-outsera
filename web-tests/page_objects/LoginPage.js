@@ -1,42 +1,35 @@
 /**
  * Page Object para a página de Login
  */
+import { SELECTORS } from '../constants/selectors';
+import { URLS } from '../constants/urls';
+import { TIMEOUTS } from '../constants/timeouts';
+import { setupNetworkInterceptions } from '../utils/networkUtils';
+
 class LoginPage {
   constructor() {
-    this.url = '/';
-    // Seletores do SauceDemo
-    this.usernameInput = '#user-name';
-    this.passwordInput = '#password';
-    this.loginButton = '#login-button';
-    // Após login bem-sucedido, redireciona para /inventory.html
-    this.successMessage = '.inventory_container';
-    this.errorMessage = '.error-message-container';
-    this.errorMessageText = 'h3[data-test="error"]';
+    this.url = URLS.LOGIN;
+    this.selectors = SELECTORS.LOGIN;
   }
 
   visit() {
-    // Interceptar apenas requisições de API (JSON, XML), não a página HTML principal
-    cy.intercept('GET', '**/*.json', { failOnStatusCode: false }).as('apiRequests');
-    cy.intercept('POST', '**/*', { failOnStatusCode: false }).as('postRequests');
-    cy.intercept('PUT', '**/*', { failOnStatusCode: false }).as('putRequests');
-    cy.intercept('DELETE', '**/*', { failOnStatusCode: false }).as('deleteRequests');
-    
-    // Visitar a página normalmente (sem interceptar HTML)
+    setupNetworkInterceptions();
     cy.visit(this.url);
+    return this;
   }
 
   fillUsername(username) {
-    cy.fillField(this.usernameInput, username);
+    cy.fillField(this.selectors.USERNAME_INPUT, username);
     return this;
   }
 
   fillPassword(password) {
-    cy.fillField(this.passwordInput, password);
+    cy.fillField(this.selectors.PASSWORD_INPUT, password);
     return this;
   }
 
   clickLogin() {
-    cy.clickElement(this.loginButton);
+    cy.clickElement(this.selectors.LOGIN_BUTTON);
     return this;
   }
 
@@ -48,16 +41,25 @@ class LoginPage {
   }
 
   shouldShowSuccessMessage() {
-    // No SauceDemo, login bem-sucedido redireciona para a página de produtos
-    cy.url().should('include', '/inventory.html');
-    cy.get(this.successMessage).should('be.visible');
+    cy.url().should('include', URLS.INVENTORY);
+    cy.get(SELECTORS.PRODUCTS.INVENTORY_CONTAINER, { timeout: TIMEOUTS.ELEMENT_VISIBILITY })
+      .should('be.visible');
     return this;
   }
 
   shouldShowErrorMessage() {
-    // No SauceDemo, mensagem de erro aparece no container
-    cy.get(this.errorMessage).should('be.visible');
-    cy.get(this.errorMessageText).should('be.visible');
+    cy.get(this.selectors.ERROR_MESSAGE_CONTAINER, { timeout: TIMEOUTS.ELEMENT_VISIBILITY })
+      .should('be.visible');
+    cy.get(this.selectors.ERROR_MESSAGE_TEXT)
+      .should('be.visible');
+    return this;
+  }
+
+  shouldShowErrorMessageWithText(message) {
+    this.shouldShowErrorMessage();
+    if (message) {
+      cy.get(this.selectors.ERROR_MESSAGE_TEXT).should('contain', message);
+    }
     return this;
   }
 

@@ -1,8 +1,11 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import NavigationPage from '../page_objects/NavigationPage';
+import ProductPage from '../page_objects/ProductPage';
+import { loginWithFixture } from '../utils/testHelpers';
 
 Given('que estou na página inicial', () => {
-  NavigationPage.visitHome();
+  loginWithFixture();
+  NavigationPage.shouldBeOnInventoryPage();
 });
 
 When('eu clico no link do carrinho', () => {
@@ -10,17 +13,13 @@ When('eu clico no link do carrinho', () => {
 });
 
 Then('eu devo estar na página inicial', () => {
-  // No SauceDemo, após login, a página inicial é /inventory.html
-  NavigationPage.shouldBeOnPage('/inventory.html');
+  NavigationPage.shouldBeOnInventoryPage();
 });
 
 Then('eu devo estar na página do carrinho', () => {
-  NavigationPage.shouldBeOnPage('/cart.html');
+  NavigationPage.shouldBeOnCartPage();
 });
 
 Then('eu devo ver os elementos principais da página', () => {
-  // No SauceDemo, página de produtos tem container de inventário
-  cy.get('.inventory_container').should('be.visible');
-  cy.get('.inventory_item').should('have.length.greaterThan', 0);
+  ProductPage.shouldBeLoaded();
 });
-

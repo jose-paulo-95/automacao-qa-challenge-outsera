@@ -1,50 +1,61 @@
 /**
  * Page Object para navegação geral
  */
+import { SELECTORS } from '../constants/selectors';
+import { URLS } from '../constants/urls';
+import { setupNetworkInterceptions } from '../utils/networkUtils';
+
 class NavigationPage {
   constructor() {
-    // Seletores do SauceDemo
-    this.menuButton = '#react-burger-menu-btn';
-    this.inventoryLink = '#inventory_sidebar_link';
-    this.aboutLink = '#about_sidebar_link';
-    this.logoutLink = '#logout_sidebar_link';
-    this.resetLink = '#reset_sidebar_link';
-    this.cartLink = '.shopping_cart_link';
+    this.selectors = SELECTORS.NAVIGATION;
   }
 
   visitHome() {
-    // Interceptar apenas requisições de API, não a página HTML
-    cy.intercept('GET', '**/*.json', { failOnStatusCode: false }).as('apiRequests');
-    cy.intercept('POST', '**/*', { failOnStatusCode: false }).as('postRequests');
-    cy.visit('/');
+    setupNetworkInterceptions();
+    cy.visit(URLS.BASE);
+    return this;
   }
 
   clickHomeLink() {
-    // No SauceDemo, após login, a página inicial é /inventory.html
-    cy.intercept('GET', '**/*.json', { failOnStatusCode: false }).as('apiRequests');
-    cy.visit('/inventory.html');
+    setupNetworkInterceptions();
+    cy.visit(URLS.INVENTORY);
     return this;
   }
 
   clickLoginLink() {
-    // No SauceDemo, para voltar ao login, fazer logout primeiro
     this.clickMenuButton();
-    cy.get(this.logoutLink).click();
+    cy.get(this.selectors.LOGOUT_LINK).click();
     return this;
   }
 
   clickMenuButton() {
-    cy.clickElement(this.menuButton);
+    cy.clickElement(this.selectors.MENU_BUTTON);
     return this;
   }
 
   clickCartLink() {
-    cy.clickElement(this.cartLink);
+    cy.clickElement(this.selectors.CART_LINK);
+    return this;
+  }
+
+  clickLogout() {
+    this.clickMenuButton();
+    cy.get(this.selectors.LOGOUT_LINK).click();
     return this;
   }
 
   shouldBeOnPage(url) {
     cy.url().should('include', url);
+    return this;
+  }
+
+  shouldBeOnInventoryPage() {
+    this.shouldBeOnPage(URLS.INVENTORY);
+    return this;
+  }
+
+  shouldBeOnCartPage() {
+    this.shouldBeOnPage(URLS.CART);
     return this;
   }
 }
